@@ -7,6 +7,9 @@ import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import ReportHazard from "./pages/ReportHazard";
 import NotFound from "./pages/NotFound";
+import LoginPage from "./pages/LoginPage";   
+import SignUpPage from "./pages/SignUpPage"; 
+import ProtectedRoute from './components/ProtectedRoute'; 
 
 const queryClient = new QueryClient();
 
@@ -18,8 +21,14 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/report" element={<ReportHazard />} />
+          <Route path="/login" element={<LoginPage />} />      
+          <Route path="/signup" element={<SignUpPage />} />
+          {/* == THIS IS THE NEW STRUCTURE == */}
+          {/* This is the "Gatekeeper" route. It has no path. */}    
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/report" element={<ReportHazard />} />
+          </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
