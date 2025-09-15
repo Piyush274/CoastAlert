@@ -1,11 +1,16 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Waves, MapPin, BarChart3, Shield, AlertTriangle } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Menu, X, Waves, MapPin, BarChart3, Shield, AlertTriangle, LogOut, User } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { currentUser, logout } = useAuth();
 
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
@@ -15,6 +20,15 @@ const Navigation = () => {
   ];
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/");
+    } catch (error) {
+      console.error("Failed to logout:", error);
+    }
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-border shadow-card">
@@ -51,12 +65,53 @@ const Navigation = () => {
 
           {/* User Actions */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="outline" size="sm">
-              Sign In
-            </Button>
-            <Button variant="hero" size="sm">
-              Join INCOIS
-            </Button>
+            {currentUser ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={currentUser.photoURL || ""} alt={currentUser.displayName || ""} />
+                      <AvatarFallback>
+                        {currentUser.displayName?.charAt(0) || currentUser.email?.charAt(0) || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <div className="flex items-center justify-start gap-2 p-2">
+                    <div className="flex flex-col space-y-1 leading-none">
+                      {currentUser.displayName && (
+                        <p className="font-medium">{currentUser.displayName}</p>
+                      )}
+                      {currentUser.email && (
+                        <p className="w-[200px] truncate text-sm text-muted-foreground">
+                          {currentUser.email}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Button variant="outline" size="sm" onClick={() => navigate("/signup")}>
+                  Sign Up
+                </Button>
+                <Button variant="hero" size="sm" onClick={() => navigate("/login")}>
+                  Login
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -95,12 +150,35 @@ const Navigation = () => {
               );
             })}
             <div className="pt-4 space-y-2">
-              <Button variant="outline" className="w-full">
-                Sign In
-              </Button>
-              <Button variant="hero" className="w-full">
-                Join INCOIS
-              </Button>
+              {currentUser ? (
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2 p-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={currentUser.photoURL || ""} alt={currentUser.displayName || ""} />
+                      <AvatarFallback>
+                        {currentUser.displayName?.charAt(0) || currentUser.email?.charAt(0) || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                      <p className="text-sm font-medium">{currentUser.displayName || "User"}</p>
+                      <p className="text-xs text-muted-foreground">{currentUser.email}</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" className="w-full" onClick={handleLogout}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Log out
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Button variant="outline" className="w-full" onClick={() => navigate("/signup")}>
+                    Sign Up
+                  </Button>
+                  <Button variant="hero" className="w-full" onClick={() => navigate("/login")}>
+                    Login
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>

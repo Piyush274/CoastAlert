@@ -1,6 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { 
   Map, 
   TrendingUp, 
@@ -9,10 +12,14 @@ import {
   Activity, 
   MapPin,
   Eye,
-  RefreshCw 
+  RefreshCw,
+  User
 } from "lucide-react";
 
 const Dashboard = () => {
+  const { currentUser } = useAuth();
+  const navigate = useNavigate();
+  
   const stats = [
     {
       title: "Active Hazard Reports",
@@ -104,13 +111,26 @@ const Dashboard = () => {
             <p className="text-muted-foreground">
               Real-time monitoring and social media insights
             </p>
+            {currentUser && (
+              <div className="flex items-center space-x-2 mt-2">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={currentUser.photoURL || ""} alt={currentUser.displayName || ""} />
+                  <AvatarFallback>
+                    {currentUser.displayName?.charAt(0) || currentUser.email?.charAt(0) || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm text-muted-foreground">
+                  Welcome back, {currentUser.displayName || currentUser.email}
+                </span>
+              </div>
+            )}
           </div>
           <div className="flex items-center space-x-3 mt-4 sm:mt-0">
             <Button variant="outline" size="sm">
               <RefreshCw className="w-4 h-4 mr-2" />
               Refresh
             </Button>
-            <Button variant="hero" size="sm">
+            <Button variant="hero" size="sm" onClick={() => navigate("/report")}>
               <AlertTriangle className="w-4 h-4 mr-2" />
               Report Hazard
             </Button>

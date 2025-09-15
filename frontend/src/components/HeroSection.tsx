@@ -1,9 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MapPin, BarChart3, Shield, Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import oceanHero from "@/assets/ocean-hero.jpg";
 
 const HeroSection = () => {
+  const navigate = useNavigate();
+  
   const features = [
     {
       icon: MapPin,
@@ -53,10 +56,20 @@ const HeroSection = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-            <Button variant="alert" size="lg" className="animate-float">
+            <Button 
+              variant="alert" 
+              size="lg" 
+              className="animate-float"
+              onClick={() => navigate("/report")}
+            >
               Report Ocean Hazard
             </Button>
-            <Button variant="outline" size="lg" className="bg-white/10 text-white border-white/30 hover:bg-white/20">
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="bg-white/10 text-white border-white/30 hover:bg-white/20"
+              onClick={() => navigate("/dashboard")}
+            >
               View Live Dashboard
             </Button>
           </div>
