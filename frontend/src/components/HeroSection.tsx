@@ -31,7 +31,7 @@ const HeroSection = () => {
   ];
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
       {/* Background Image */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -41,25 +41,25 @@ const HeroSection = () => {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-8">
         <div className="animate-fade-in">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
             Protecting Coastal
             <span className="block gradient-text bg-gradient-to-r from-blue-200 to-teal-200 bg-clip-text text-transparent">
               Communities Together
             </span>
           </h1>
           
-          <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed px-4">
             Join the INCOIS Ocean Hazard Monitoring Platform. Report threats, monitor real-time insights, 
             and help protect coastal areas from tsunamis, storm surges, and other ocean hazards.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16 px-4">
             <Button 
               variant="alert" 
               size="lg" 
-              className="animate-float"
+              className="animate-float w-full sm:w-auto"
               onClick={() => navigate("/report")}
             >
               Report Ocean Hazard
@@ -67,7 +67,7 @@ const HeroSection = () => {
             <Button 
               variant="outline" 
               size="lg" 
-              className="bg-white/10 text-white border-white/30 hover:bg-white/20"
+              className="bg-white/10 text-white border-white/30 hover:bg-white/20 w-full sm:w-auto"
               onClick={() => navigate("/dashboard")}
             >
               View Live Dashboard
@@ -76,7 +76,7 @@ const HeroSection = () => {
         </div>
 
         {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in px-4">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
@@ -97,7 +97,7 @@ const HeroSection = () => {
       </div>
 
       {/* Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+      <div className="absolute bottom-4 sm:bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
         <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
           <div className="w-1 h-3 bg-white/70 rounded-full mt-2 animate-pulse"></div>
         </div>
