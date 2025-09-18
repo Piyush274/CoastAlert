@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { 
   Map, 
   TrendingUp, 
@@ -13,72 +14,95 @@ import {
   MapPin,
   Eye,
   RefreshCw,
-  User
+  User,
+  Loader2
 } from "lucide-react";
+import { HazardService } from "@/services/hazardService";
+import { HazardReport } from "@/types/hazard";
 
 const Dashboard = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const [recentReports, setRecentReports] = useState<HazardReport[]>([]);
+  const [stats, setStats] = useState({
+    totalReports: 0,
+    pendingReports: 0,
+    verifiedReports: 0,
+    criticalReports: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   
-  const stats = [
+  const loadDashboardData = async () => {
+    try {
+      const [reports, dashboardStats] = await Promise.all([
+        HazardService.getRecentReports(5),
+        HazardService.getDashboardStats()
+      ]);
+      
+      setRecentReports(reports);
+      setStats(dashboardStats);
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadDashboardData();
+  };
+
+  const formatTimeAgo = (date: Date) => {
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 60) return `${diffInMinutes} min ago`;
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+  };
+
+  const statsData = [
     {
-      title: "Active Hazard Reports",
-      value: "12",
-      change: "+3 today",
+      title: "Total Reports",
+      value: stats.totalReports.toString(),
+      change: "All time",
       icon: AlertTriangle,
       color: "text-alert",
       bgColor: "bg-alert-light",
     },
     {
-      title: "Social Media Mentions",
-      value: "1,847",
-      change: "+23% this hour",
+      title: "Pending Reports",
+      value: stats.pendingReports.toString(),
+      change: "Awaiting verification",
       icon: TrendingUp,
       color: "text-secondary",
       bgColor: "bg-secondary-light",
     },
     {
-      title: "Active Volunteers",
-      value: "346",
-      change: "+12 online",
+      title: "Verified Reports",
+      value: stats.verifiedReports.toString(),
+      change: "Confirmed incidents",
       icon: Users,
       color: "text-primary",
       bgColor: "bg-primary-light",
     },
     {
-      title: "Monitored Locations",
-      value: "89",
-      change: "Coastal areas",
+      title: "Critical Reports",
+      value: stats.criticalReports.toString(),
+      change: "High priority",
       icon: MapPin,
-      color: "text-secondary",
-      bgColor: "bg-secondary-light",
-    },
-  ];
-
-  const recentReports = [
-    {
-      id: 1,
-      type: "High Waves",
-      location: "Chennai Coast",
-      time: "2 min ago",
-      status: "verified",
-      severity: "medium",
-    },
-    {
-      id: 2,
-      type: "Storm Surge",
-      location: "Visakhapatnam",
-      time: "15 min ago",
-      status: "pending",
-      severity: "high",
-    },
-    {
-      id: 3,
-      type: "Unusual Tide",
-      location: "Kochi Harbor",
-      time: "28 min ago",
-      status: "verified",
-      severity: "low",
+      color: "text-alert",
+      bgColor: "bg-alert-light",
     },
   ];
 
@@ -126,20 +150,33 @@ const Dashboard = () => {
             )}
           </div>
           <div className="flex items-center space-x-3 mt-4 sm:mt-0">
-            <Button variant="outline" size="sm">
-              <RefreshCw className="w-4 h-4 mr-2" />
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefresh}
+              disabled={refreshing}
+            >
+              {refreshing ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4 mr-2" />
+              )}
               Refresh
             </Button>
             <Button variant="hero" size="sm" onClick={() => navigate("/report")}>
               <AlertTriangle className="w-4 h-4 mr-2" />
               Report Hazard
             </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate("/admin")}>
+              <User className="w-4 h-4 mr-2" />
+              Admin Panel
+            </Button>
           </div>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => {
+          {statsData.map((stat, index) => {
             const Icon = stat.icon;
             return (
               <Card key={index} className="hover-lift shadow-card">
@@ -200,25 +237,42 @@ const Dashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {recentReports.map((report) => (
-                <div key={report.id} className="flex items-center justify-between p-3 bg-accent rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <Badge className={getSeverityColor(report.severity)}>
-                        {report.type}
-                      </Badge>
-                      <Badge variant="outline" className={getStatusColor(report.status)}>
-                        {report.status}
-                      </Badge>
-                    </div>
-                    <p className="text-sm font-medium">{report.location}</p>
-                    <p className="text-xs text-muted-foreground">{report.time}</p>
-                  </div>
-                  <Button variant="ghost" size="sm">
-                    <Eye className="w-4 h-4" />
-                  </Button>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                  <span>Loading reports...</span>
                 </div>
-              ))}
+              ) : recentReports.length === 0 ? (
+                <div className="text-center py-8">
+                  <Activity className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No reports yet</p>
+                  <p className="text-sm text-muted-foreground">Be the first to report a hazard</p>
+                </div>
+              ) : (
+                recentReports.map((report) => (
+                  <div key={report.id} className="flex items-center justify-between p-3 bg-accent rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <Badge className={getSeverityColor(report.severity)}>
+                          {report.hazardType}
+                        </Badge>
+                        <Badge variant="outline" className={getStatusColor(report.status)}>
+                          {report.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm font-medium">
+                        {report.location.lat.toFixed(4)}, {report.location.lng.toFixed(4)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatTimeAgo(report.createdAt)} • {report.reporterName}
+                      </p>
+                    </div>
+                    <Button variant="ghost" size="sm">
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
         </div>

@@ -17,11 +17,24 @@ import {
   Loader2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { HazardService } from "@/services/hazardService";
+import { HazardReportFormData } from "@/types/hazard";
 
 const ReportHazard = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [formData, setFormData] = useState<HazardReportFormData>({
+    reporterName: '',
+    reporterRole: '',
+    hazardType: '',
+    severity: '',
+    location: { lat: 0, lng: 0 },
+    description: '',
+    mediaFiles: []
+  });
   const { toast } = useToast();
+  const { currentUser } = useAuth();
 
   const hazardTypes = [
     "Tsunami Warning",
@@ -45,10 +58,15 @@ const ReportHazard = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setLocation({
+          const newLocation = {
             lat: position.coords.latitude,
             lng: position.coords.longitude
-          });
+          };
+          setLocation(newLocation);
+          setFormData(prev => ({
+            ...prev,
+            location: newLocation
+          }));
           toast({
             title: "Location detected",
             description: "Your current location has been captured.",
@@ -65,18 +83,108 @@ const ReportHazard = () => {
     }
   };
 
+  const handleInputChange = (field: keyof HazardReportFormData, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation
+    if (!formData.reporterName.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter your name.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!formData.reporterRole) {
+      toast({
+        title: "Validation Error", 
+        description: "Please select your role.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!formData.hazardType) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a hazard type.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!formData.severity) {
+      toast({
+        title: "Validation Error",
+        description: "Please select severity level.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!formData.description.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please provide a description.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!currentUser) {
+      toast({
+        title: "Authentication Error",
+        description: "Please log in to submit a report.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     
-    // Simulate submission
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      // Save to Firebase
+      const reportId = await HazardService.saveHazardReport(
+        formData,
+        currentUser.uid,
+        currentUser.email || ''
+      );
+      
       toast({
         title: "Report submitted successfully",
-        description: "Your hazard report has been sent to INCOIS for verification.",
+        description: `Your hazard report has been saved with ID: ${reportId}`,
       });
-    }, 2000);
+      
+      // Reset form
+      setFormData({
+        reporterName: '',
+        reporterRole: '',
+        hazardType: '',
+        severity: '',
+        location: { lat: 0, lng: 0 },
+        description: '',
+        mediaFiles: []
+      });
+      setLocation(null);
+      
+    } catch (error) {
+      console.error('Error submitting report:', error);
+      toast({
+        title: "Submission Error",
+        description: "Failed to submit your report. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -109,11 +217,16 @@ const ReportHazard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="reporter-name">Your Name</Label>
-                    <Input id="reporter-name" placeholder="Enter your full name" />
+                    <Input 
+                      id="reporter-name" 
+                      placeholder="Enter your full name"
+                      value={formData.reporterName}
+                      onChange={(e) => handleInputChange('reporterName', e.target.value)}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="reporter-role">Role</Label>
-                    <Select>
+                    <Select value={formData.reporterRole} onValueChange={(value) => handleInputChange('reporterRole', value)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select your role" />
                       </SelectTrigger>
@@ -132,7 +245,7 @@ const ReportHazard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="hazard-type">Hazard Type</Label>
-                    <Select>
+                    <Select value={formData.hazardType} onValueChange={(value) => handleInputChange('hazardType', value)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select hazard type" />
                       </SelectTrigger>
@@ -147,7 +260,7 @@ const ReportHazard = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="severity">Severity Level</Label>
-                    <Select>
+                    <Select value={formData.severity} onValueChange={(value) => handleInputChange('severity', value)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select severity" />
                       </SelectTrigger>
@@ -199,6 +312,8 @@ const ReportHazard = () => {
                     id="description"
                     placeholder="Describe what you observed in detail..."
                     className="min-h-[100px]"
+                    value={formData.description}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
                   />
                 </div>
 

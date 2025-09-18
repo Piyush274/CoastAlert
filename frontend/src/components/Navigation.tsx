@@ -15,7 +15,6 @@ const Navigation = () => {
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
     { name: "Report Hazard", href: "/report", icon: AlertTriangle },
-    { name: "Analytics", href: "/analytics", icon: BarChart3 },
     { name: "Admin", href: "/admin", icon: Shield },
   ];
 
